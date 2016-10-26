@@ -1,0 +1,4 @@
+node_modules
+registration.yaml
+config.ini
+*.db

@@ -1,0 +1,16 @@
+[matrix]
+registration = registration.yaml
+homeserver_url = http://localhost:8008
+appservice_url = http://localhost:8010
+appservice_port = 8010
+user_id =
+sender_localpart =
+domain =
+
+[database]
+user =
+database =
+password =
+port = 5432
+max_connections = 10
+idle_timeout = 30000
