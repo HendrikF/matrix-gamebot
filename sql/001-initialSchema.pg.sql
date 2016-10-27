@@ -2,6 +2,7 @@ CREATE TABLE game
 (
   room character varying NOT NULL,
   type character varying NOT NULL,
+  data character varying,
   CONSTRAINT game_pkey PRIMARY KEY (room)
 );
 CREATE TABLE game_user_id
