@@ -43,13 +43,13 @@ TicTacToe.prototype.introduce = function() {
         "123\n456\n789\nThe fields are numbered 1-9, just type the according number.\n\n" +
         beginner.user + " (" + beginner.data + ") will begin!\n\n";
     
-    bot.bridge.getIntent().sendText(this.room, text).then(function() {
-        bot.bridge.getIntent().sendText(self.room, self._printField());
+    bot.client.sendTextMessage(this.room, text).then(function() {
+        bot.client.sendTextMessage(self.room, self._printField());
     });
 }
 
 TicTacToe.prototype.onText = function(player, event) {
-    var text = event.content.body;
+    var text = event.getContent().body;
     if (this.data.turn == player.data) {
         var match = text.match(/^[1-9]/);
         if (match) {
@@ -57,17 +57,17 @@ TicTacToe.prototype.onText = function(player, event) {
             if (this.data.field[num] == '') {
                 this.data.field[num] = player.data;
                 this.data.turn = this.data.turn == "X" ? "O" : "X";
-                bot.bridge.getIntent().sendText(event.room_id, this._printField());
+                bot.client.sendTextMessage(event.getRoomId(), this._printField());
                 var winner = this._getWinner();
                 if (winner !== false) {
                     this.finished = true;
                     if (winner != null) {
                         var winner = this.players[0].data == winner ? this.players[0] : this.players[1];
                         var text = winner.user + " wins this game! Congratulations!";
-                        bot.bridge.getIntent().sendText(event.room_id, text);
+                        bot.client.sendTextMessage(event.getRoomId(), text);
                     } else {
                         var text = "Oh, no! It's a draw!";
-                        bot.bridge.getIntent().sendText(event.room_id, text);
+                        bot.client.sendTextMessage(event.getRoomId(), text);
                     }
                     return false;
                 }
