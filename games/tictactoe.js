@@ -1,4 +1,5 @@
 "use strict";
+var gd = require("easy-gd");
 var bot;
 
 function TicTacToe(room, players, data) {
@@ -44,11 +45,12 @@ TicTacToe.prototype.introduce = function() {
         beginner.user + " (" + beginner.data + ") will begin!\n\n";
     
     bot.client.sendTextMessage(this.room, text).then(function() {
-        bot.client.sendTextMessage(self.room, self._printField());
+        self._sendField(function(){});
     });
 }
 
-TicTacToe.prototype.onText = function(player, event) {
+TicTacToe.prototype.onText = function(player, event, callback) {
+    var self = this;
     var text = event.getContent().body;
     if (this.data.turn == player.data) {
         var match = text.match(/^[1-9]/);
@@ -57,25 +59,114 @@ TicTacToe.prototype.onText = function(player, event) {
             if (this.data.field[num] == '') {
                 this.data.field[num] = player.data;
                 this.data.turn = this.data.turn == "X" ? "O" : "X";
-                bot.client.sendTextMessage(event.getRoomId(), this._printField());
-                var winner = this._getWinner();
-                if (winner !== false) {
-                    this.finished = true;
-                    if (winner != null) {
-                        var winner = this.players[0].data == winner ? this.players[0] : this.players[1];
-                        var text = winner.user + " wins this game! Congratulations!";
-                        bot.client.sendTextMessage(event.getRoomId(), text);
-                    } else {
-                        var text = "Oh, no! It's a draw!";
-                        bot.client.sendTextMessage(event.getRoomId(), text);
+                
+                this._sendField(function() {
+                    var winner = self._getWinner();
+                    if (winner !== false) {
+                        self.finished = true;
+                        if (winner != null) {
+                            var winner = self.players[0].data == winner ? self.players[0] : self.players[1];
+                            var text = winner.user + " wins this game! Congratulations!";
+                            bot.client.sendTextMessage(event.getRoomId(), text);
+                        } else {
+                            var text = "Oh, no! It's a draw!";
+                            bot.client.sendTextMessage(event.getRoomId(), text);
+                        }
+                        callback(false);
+                        return;
                     }
-                    return false;
-                }
-                return true;
+                    callback(true);
+                    return;
+                    
+                });
             }
         }
     }
-    return false;
+    callback(false);
+    return;
+}
+
+TicTacToe.prototype._sendField = function(callback) {
+    var self = this;
+    this._generateImage(function(buffer) {
+        bot.client.uploadContent(buffer, {
+            name: "tictactoe",
+            type: "image/png",
+            rawResponse: false
+        }).then(function(response) {
+            bot.client.sendImageMessage(self.room, response.content_uri, {
+                "mimetype": "image/png",
+                "h": 94,
+                "w": 94,
+                "size": buffer.length
+            }, self._shortField(), function() {
+                callback();
+            });
+        });
+    });
+}
+
+TicTacToe.prototype._generateImage = function(callback) {
+    var self = this;
+    gd.create(94, 94, function(err, image) {
+        var black = image.colorAllocate(0, 0, 0);
+        var white = image.colorAllocate(255, 255, 255);
+        image.fill(0, 0, white);
+        image.setThickness(2);
+        image.line(31, 0, 31, 94, black);
+        image.line(63, 0, 63, 94, black);
+        image.line(0, 31, 94, 31, black);
+        image.line(0, 63, 94, 63, black);
+        
+        for (var num = 0; num <= 8; num++) {
+            var symbol = self.data.field[num];
+            if (symbol == "X") {
+                drawX(num, image, black);
+            } else if(symbol == "O") {
+                drawO(num, image, black);
+            }
+        }
+        
+        callback(image.save({format: 'png', compression: 9}));
+        
+        image.destroy();
+    });
+    
+    function drawO(num, image, color) {
+        var x = num % 3;
+        var y = Math.floor(num / 3);
+        x = x * 32 + 14;
+        y = y * 32 + 14;
+        image.ellipse(x, y, 26, 26, color);
+    }
+    
+    function drawX(num, image, color) {
+        var x = num % 3;
+        var y = Math.floor(num / 3);
+        var x1 = x * 32 + 2;
+        var y1 = y * 32 + 2;
+        var x2 = x * 32 + 28;
+        var y2 = y * 32 + 28;
+        image.setThickness(2);
+        image.line(x1, y1, x2, y2, color);
+        image.line(x1, y2, x2, y1, color);
+    }
+}
+
+TicTacToe.prototype._shortField = function() {
+    var message = "";
+    message += this.data.field[0] || "_";
+    message += this.data.field[1] || "_";
+    message += this.data.field[2] || "_";
+    message += "|";
+    message += this.data.field[3] || "_";
+    message += this.data.field[4] || "_";
+    message += this.data.field[5] || "_";
+    message += "|";
+    message += this.data.field[6] || "_";
+    message += this.data.field[7] || "_";
+    message += this.data.field[8] || "_";
+    return message;
 }
 
 TicTacToe.prototype._printField = function() {
