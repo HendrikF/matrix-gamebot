@@ -11,7 +11,7 @@
   "dependencies": {
     "config-ini-parser": "^1.1.6",
     "easy-gd": "git+https://git@github.com/sheershoff/easy-gd.git",
-    "matrix-js-sdk": "^0.6.3",
+    "matrix-js-sdk": ">=12.4.1",
     "pg": "^6.1.0",
     "shell-quote": "^1.6.1"
   }
